@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum EmailStatus {
+  scheduled
+  sending
+  sent
+  failed
+}
+
+model User {
+  id        String   @id @default(cuid())
+  googleId  String   @unique
+  name      String
+  email     String   @unique
+  avatar    String?  @db.Text
+  createdAt DateTime @default(now())
+
+  batches Batch[]
+  slack   SlackConnection?
+}
+
+// senders are shared and loaded from env in phase 2
+model Sender {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  smtpHost  String
+  smtpPort  Int      @default(587)
+  smtpUser  String
+  smtpPass  String
+  createdAt DateTime @default(now())
+
+  emails EmailJob[]
+}
+
+// one batch = one click on the Schedule button
+model Batch {
+  id          String   @id @default(cuid())
+  userId      String
+  subject     String   @db.VarChar(500)
+  body        String   @db.Text
+  startTime   DateTime
+  delayMs     Int
+  hourlyLimit Int
+  createdAt   DateTime @default(now())
+
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emails EmailJob[]
+
+  @@index([userId])
+}
+
+model EmailJob {
+  id          String      @id @default(cuid())
+  batchId     String
+  senderId    String
+  toEmail     String      @db.VarChar(255)
+  subject     String      @db.VarChar(500)
+  scheduledAt DateTime
+  status      EmailStatus @default(scheduled)
+  sentAt      DateTime?
+  error       String?     @db.Text
+  attempts    Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  batch  Batch  @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  sender Sender @relation(fields: [senderId], references: [id])
+
+  // same address twice in one batch is blocked by the database itself
+  @@unique([batchId, toEmail])
+  @@index([status, scheduledAt])
+  @@index([senderId])
+}
+
+model SlackConnection {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  webhookUrl String   @db.Text
+  channel    String?
+  teamName   String?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
