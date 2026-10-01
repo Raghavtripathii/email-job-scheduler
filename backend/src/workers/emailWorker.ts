@@ -1,29 +1,57 @@
-import { Worker, type Job } from 'bullmq';
+import { DelayedError, Worker, type Job } from 'bullmq';
 import { EmailStatus } from '@prisma/client';
 import { env } from '../config/env';
 import { prisma } from '../lib/prisma';
 import { bullConnection } from '../lib/redis';
 import { sendEmail } from '../lib/mailer';
 import { EMAIL_QUEUE_NAME, type EmailJobData } from '../queues/names';
+import { nextSlotTime, takeSlot } from '../services/rateLimiter';
 
-async function processEmail(job: Job<EmailJobData>) {
+async function processEmail(job: Job<EmailJobData>, token?: string) {
   const { emailJobId } = job.data;
 
-  // claim first, only one worker can win this
+  const email = await prisma.emailJob.findUnique({
+    where: { id: emailJobId },
+    include: { sender: true, batch: { select: { body: true, hourlyLimit: true } } },
+  });
+
+  // cheap check first, nothing to do if it was handled already
+  if (!email || email.status !== EmailStatus.scheduled) {
+    console.log(`skip ${emailJobId}, already taken or gone`);
+    return;
+  }
+
+  // hourly limit for this sender, counted in redis so every worker agrees
+  const now = Date.now();
+  const limit = Math.min(email.batch.hourlyLimit, env.MAX_EMAILS_PER_HOUR_PER_SENDER);
+  const slot = await takeSlot(email.senderId, limit, now);
+
+  if (!slot.allowed) {
+    const runAt = nextSlotTime(slot.position, limit, env.MIN_DELAY_BETWEEN_EMAILS_MS, now);
+
+    // show the new time in the scheduled list, then push the job back in the queue
+    await prisma.emailJob.update({
+      where: { id: emailJobId },
+      data: { scheduledAt: new Date(runAt) },
+    });
+    await job.moveToDelayed(runAt, token);
+
+    // first one over the limit is the moment slack gets told in phase 6
+    if (slot.position === 1) {
+      console.log(`hourly limit of ${limit} hit for ${email.sender.email}, pushing the rest to the next hours`);
+    }
+    throw new DelayedError();
+  }
+
+  // claim it, only one worker can win this
   const claimed = await prisma.emailJob.updateMany({
     where: { id: emailJobId, status: EmailStatus.scheduled },
     data: { status: EmailStatus.sending, attempts: { increment: 1 } },
   });
   if (claimed.count === 0) {
-    console.log(`skip ${emailJobId}, already taken or gone`);
+    console.log(`skip ${emailJobId}, someone else claimed it`);
     return;
   }
-
-  const email = await prisma.emailJob.findUnique({
-    where: { id: emailJobId },
-    include: { sender: true, batch: { select: { body: true } } },
-  });
-  if (!email) return;
 
   try {
     const result = await sendEmail({
@@ -50,9 +78,16 @@ async function processEmail(job: Job<EmailJobData>) {
 }
 
 export function createEmailWorker() {
+  // one send per min delay, shared by every worker on this queue
+  const limiter =
+    env.MIN_DELAY_BETWEEN_EMAILS_MS > 0
+      ? { max: 1, duration: env.MIN_DELAY_BETWEEN_EMAILS_MS }
+      : undefined;
+
   const worker = new Worker<EmailJobData>(EMAIL_QUEUE_NAME, processEmail, {
     connection: bullConnection,
     concurrency: env.WORKER_CONCURRENCY,
+    limiter,
   });
 
   worker.on('failed', (job, err) => console.error(`failed ${job?.id}: ${err.message}`));
