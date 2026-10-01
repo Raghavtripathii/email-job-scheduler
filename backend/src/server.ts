@@ -3,10 +3,12 @@ import { env } from './config/env';
 import { prisma } from './lib/prisma';
 import { redis } from './lib/redis';
 import { emailQueue } from './queues/emailQueue';
+import { reconcile } from './services/reconcile';
 import { syncSenders } from './services/senderService';
 
 async function main() {
   await syncSenders();
+  await reconcile().catch((err) => console.error('reconcile failed:', err.message));
 
   const server = app.listen(env.PORT, () => {
     console.log(`api listening on http://localhost:${env.PORT}`);
