@@ -7,7 +7,7 @@ import { Pagination } from './ui/Pagination';
 import { StatusBadge } from './ui/StatusBadge';
 import { Table, type Column } from './ui/Table';
 
-type Kind = 'scheduled' | 'sent';
+type Kind = 'scheduled' | 'sent' | 'search';
 
 const emailCell = (row: EmailItem) => <span className="font-medium text-slate-900">{row.toEmail}</span>;
 
@@ -33,6 +33,12 @@ const columns: Record<Kind, Column<EmailItem>[]> = {
     { header: 'Sent time', cell: (row) => formatDateTime(row.sentAt) },
     { header: 'Status', cell: statusCell },
   ],
+  search: [
+    { header: 'Email', cell: emailCell },
+    { header: 'Subject', cell: subjectCell },
+    { header: 'Time', cell: (row) => formatDateTime(row.sentAt ?? row.scheduledAt) },
+    { header: 'Status', cell: statusCell },
+  ],
 };
 
 const emptyText: Record<Kind, { title: string; text: string }> = {
@@ -43,6 +49,10 @@ const emptyText: Record<Kind, { title: string; text: string }> = {
   sent: {
     title: 'No sent emails yet',
     text: 'Once an email goes out, it shows up here with its status.',
+  },
+  search: {
+    title: 'No matches',
+    text: 'Try another word, or part of an email address.',
   },
 };
 
@@ -72,7 +82,7 @@ export function EmailTable({ kind, state }: Props) {
   } else if (!data && error) {
     content = (
       <EmptyState
-        title="Could not load emails"
+        title={kind === 'search' ? 'Search is not available' : 'Could not load emails'}
         text={error}
         action={<Button onClick={refresh}>Try again</Button>}
       />
