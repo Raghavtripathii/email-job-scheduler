@@ -6,6 +6,7 @@ import { bullConnection } from '../lib/redis';
 import { sendEmail } from '../lib/mailer';
 import { EMAIL_QUEUE_NAME, type EmailJobData } from '../queues/names';
 import { nextSlotTime, takeSlot } from '../services/rateLimiter';
+import { updateEmailDoc } from '../services/searchIndex';
 import { notifyRateLimitHit } from '../services/slackNotifier';
 
 async function processEmail(job: Job<EmailJobData>, token?: string) {
@@ -29,12 +30,14 @@ async function processEmail(job: Job<EmailJobData>, token?: string) {
 
   if (!slot.allowed) {
     const runAt = nextSlotTime(slot.position, limit, env.MIN_DELAY_BETWEEN_EMAILS_MS, now);
+    const rescheduledAt = new Date(runAt);
 
     // show the new time in the scheduled list, then push the job back in the queue
     await prisma.emailJob.update({
       where: { id: emailJobId },
-      data: { scheduledAt: new Date(runAt) },
+      data: { scheduledAt: rescheduledAt },
     });
+    await updateEmailDoc(emailJobId, { scheduledAt: rescheduledAt });
     await job.moveToDelayed(runAt, token);
 
     if (slot.position === 1) {
@@ -71,17 +74,21 @@ async function processEmail(job: Job<EmailJobData>, token?: string) {
       text: email.batch.body,
     });
 
+    const sentAt = new Date();
     await prisma.emailJob.update({
       where: { id: emailJobId },
-      data: { status: EmailStatus.sent, sentAt: new Date(), error: null },
+      data: { status: EmailStatus.sent, sentAt, error: null },
     });
+    await updateEmailDoc(emailJobId, { status: EmailStatus.sent, sentAt });
     console.log(`sent to ${email.toEmail} via ${email.sender.email} | ${result.previewUrl}`);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
+    const failedAt = new Date();
     await prisma.emailJob.update({
       where: { id: emailJobId },
-      data: { status: EmailStatus.failed, sentAt: new Date(), error: message.slice(0, 1000) },
+      data: { status: EmailStatus.failed, sentAt: failedAt, error: message.slice(0, 1000) },
     });
+    await updateEmailDoc(emailJobId, { status: EmailStatus.failed, sentAt: failedAt });
     // rethrow so the job shows as failed in the queue too
     throw err;
   }
