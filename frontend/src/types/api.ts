@@ -43,3 +43,9 @@ export type ScheduleResult = {
   firstSendAt: string;
   lastSendAt: string;
 };
+
+export type SlackStatus = {
+  connected: boolean;
+  channel?: string | null;
+  teamName?: string | null;
+};
