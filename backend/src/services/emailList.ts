@@ -1,6 +1,18 @@
 import type { EmailStatus, Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 
+// the same fields are used by the lists and by search results
+export const emailSelect = {
+  id: true,
+  toEmail: true,
+  subject: true,
+  scheduledAt: true,
+  status: true,
+  sentAt: true,
+  error: true,
+  sender: { select: { email: true } },
+} satisfies Prisma.EmailJobSelect;
+
 type ListArgs = {
   userId: string;
   statuses: EmailStatus[];
@@ -22,16 +34,7 @@ export async function listEmails({ userId, statuses, orderBy, page, limit }: Lis
       orderBy,
       skip: (page - 1) * limit,
       take: limit,
-      select: {
-        id: true,
-        toEmail: true,
-        subject: true,
-        scheduledAt: true,
-        status: true,
-        sentAt: true,
-        error: true,
-        sender: { select: { email: true } },
-      },
+      select: emailSelect,
     }),
     prisma.emailJob.count({ where }),
   ]);
