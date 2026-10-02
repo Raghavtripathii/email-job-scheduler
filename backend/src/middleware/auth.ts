@@ -1,14 +1,16 @@
 import type { NextFunction, Request, Response } from 'express';
-import { prisma } from '../lib/prisma';
+import { COOKIE_NAME, readSession } from '../lib/jwt';
 
-// temporary, phase 4 swaps this for the real google login check
-export async function requireUser(_req: Request, res: Response, next: NextFunction) {
-  const user = await prisma.user.upsert({
-    where: { googleId: 'dev-user' },
-    update: {},
-    create: { googleId: 'dev-user', name: 'Dev User', email: 'dev@local.test' },
-  });
+// no valid wristband, no entry
+export function requireUser(req: Request, res: Response, next: NextFunction) {
+  const token = req.cookies?.[COOKIE_NAME];
+  const userId = typeof token === 'string' ? readSession(token) : null;
 
-  res.locals.userId = user.id;
+  if (!userId) {
+    res.status(401).json({ error: 'please log in' });
+    return;
+  }
+
+  res.locals.userId = userId;
   next();
 }
