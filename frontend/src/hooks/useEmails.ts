@@ -6,7 +6,8 @@ const POLL_MS = 5000;
 
 type Fetcher = (page: number, limit: number) => Promise<EmailList>;
 
-export function useEmails(fetcher: Fetcher) {
+// enabled=false switches it off, used when there is nothing to search for
+export function useEmails(fetcher: Fetcher, enabled = true) {
   const [page, setPage] = useState(1);
   const [data, setData] = useState<EmailList | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,13 +40,20 @@ export function useEmails(fetcher: Fetcher) {
   );
 
   useEffect(() => {
+    if (!enabled) {
+      setData(null);
+      setError(null);
+      setLoading(true);
+      return;
+    }
+
     load(true);
     // refresh quietly, but not while the tab is hidden
     const timer = setInterval(() => {
       if (!document.hidden) load(false);
     }, POLL_MS);
     return () => clearInterval(timer);
-  }, [load]);
+  }, [load, enabled]);
 
   const refresh = useCallback(() => load(false), [load]);
 
