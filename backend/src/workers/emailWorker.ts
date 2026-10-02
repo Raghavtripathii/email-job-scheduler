@@ -6,13 +6,14 @@ import { bullConnection } from '../lib/redis';
 import { sendEmail } from '../lib/mailer';
 import { EMAIL_QUEUE_NAME, type EmailJobData } from '../queues/names';
 import { nextSlotTime, takeSlot } from '../services/rateLimiter';
+import { notifyRateLimitHit } from '../services/slackNotifier';
 
 async function processEmail(job: Job<EmailJobData>, token?: string) {
   const { emailJobId } = job.data;
 
   const email = await prisma.emailJob.findUnique({
     where: { id: emailJobId },
-    include: { sender: true, batch: { select: { body: true, hourlyLimit: true } } },
+    include: { sender: true, batch: { select: { body: true, hourlyLimit: true, userId: true } } },
   });
 
   // cheap check first, nothing to do if it was handled already
@@ -36,10 +37,19 @@ async function processEmail(job: Job<EmailJobData>, token?: string) {
     });
     await job.moveToDelayed(runAt, token);
 
-    // first one over the limit is the moment slack gets told in phase 6
     if (slot.position === 1) {
       console.log(`hourly limit of ${limit} hit for ${email.sender.email}, pushing the rest to the next hours`);
     }
+
+    // tells the owner on slack, at most once per sender per hour
+    await notifyRateLimitHit({
+      userId: email.batch.userId,
+      senderId: email.senderId,
+      senderEmail: email.sender.email,
+      limit,
+      nowMs: now,
+    });
+
     throw new DelayedError();
   }
 
