@@ -7,6 +7,7 @@ import { requireUser } from './middleware/auth';
 import { authRouter } from './routes/auth';
 import { emailsRouter } from './routes/emails';
 import { healthRouter } from './routes/health';
+import { QUEUE_BOARD_PATH, queueBoardRouter } from './routes/queueBoard';
 import { scheduleRouter } from './routes/schedule';
 import { slackRouter } from './routes/slack';
 
@@ -21,6 +22,9 @@ app.use('/api/auth', authRouter);
 app.use('/api/slack', slackRouter);
 app.use('/api/schedule', requireUser, scheduleRouter);
 app.use('/api/emails', requireUser, emailsRouter);
+
+// live queue screen, needs a login
+app.use(QUEUE_BOARD_PATH, requireUser, queueBoardRouter);
 
 app.use(notFound);
 app.use(errorHandler);
