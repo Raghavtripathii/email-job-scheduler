@@ -8,6 +8,7 @@ import { authRouter } from './routes/auth';
 import { emailsRouter } from './routes/emails';
 import { healthRouter } from './routes/health';
 import { scheduleRouter } from './routes/schedule';
+import { slackRouter } from './routes/slack';
 
 export const app = express();
 
@@ -17,6 +18,7 @@ app.use(cookieParser());
 
 app.use('/health', healthRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/slack', slackRouter);
 app.use('/api/schedule', requireUser, scheduleRouter);
 app.use('/api/emails', requireUser, emailsRouter);
 
