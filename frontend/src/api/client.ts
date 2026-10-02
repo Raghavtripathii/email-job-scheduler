@@ -9,7 +9,7 @@ export class ApiError extends Error {
   }
 }
 
-type Options = { method?: 'GET' | 'POST'; body?: unknown };
+type Options = { method?: 'GET' | 'POST' | 'DELETE'; body?: unknown };
 
 // turns the backend error shapes into one readable line
 function readError(data: unknown): string {
