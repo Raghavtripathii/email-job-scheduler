@@ -12,13 +12,17 @@
     "dev:worker": "tsx watch src/worker.ts",
     "start:worker": "node dist/worker.js",
     "loadtest": "tsx src/scripts/loadTest.ts",
-    "token": "tsx src/scripts/devToken.ts"
+    "token": "tsx src/scripts/devToken.ts",
+    "reindex": "tsx src/scripts/reindex.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@bull-board/api": "^9.10.2",
+    "@bull-board/express": "^9.10.2",
+    "@elastic/elasticsearch": "^8.19.2",
     "@prisma/client": "^6.19.3",
     "bullmq": "^6.3.11",
     "cookie-parser": "^1.4.7",
