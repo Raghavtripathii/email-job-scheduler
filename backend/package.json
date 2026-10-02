@@ -11,7 +11,8 @@
     "prisma:generate": "prisma generate",
     "dev:worker": "tsx watch src/worker.ts",
     "start:worker": "node dist/worker.js",
-    "loadtest": "tsx src/scripts/loadTest.ts"
+    "loadtest": "tsx src/scripts/loadTest.ts",
+    "token": "tsx src/scripts/devToken.ts"
   },
   "keywords": [],
   "author": "",
@@ -20,16 +21,21 @@
   "dependencies": {
     "@prisma/client": "^6.19.3",
     "bullmq": "^6.3.11",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^18.0.5",
     "express": "^5.2.1",
+    "google-auth-library": "^11.1.0",
     "ioredis": "^6.0.0",
+    "jsonwebtoken": "^9.0.3",
     "nodemailer": "^10.0.13",
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.6.3",
     "@types/nodemailer": "^8.0.2",
     "prisma": "^6.19.3",
