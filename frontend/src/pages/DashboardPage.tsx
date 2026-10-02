@@ -3,6 +3,7 @@ import { listScheduled, listSent } from '../api/emails';
 import { ComposeModal } from '../components/ComposeModal';
 import { EmailTable } from '../components/EmailTable';
 import { Header } from '../components/Header';
+import { SlackButton } from '../components/SlackButton';
 import { Button } from '../components/ui/Button';
 import { Tabs } from '../components/ui/Tabs';
 import { useEmails } from '../hooks/useEmails';
@@ -30,7 +31,10 @@ export function DashboardPage() {
             active={tab}
             onChange={setTab}
           />
-          <Button onClick={() => setComposeOpen(true)}>Compose New Email</Button>
+          <div className="flex items-center gap-3">
+            <SlackButton />
+            <Button onClick={() => setComposeOpen(true)}>Compose New Email</Button>
+          </div>
         </div>
 
         <EmailTable kind={tab} state={tab === 'scheduled' ? scheduled : sent} />
