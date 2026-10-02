@@ -1,8 +1,10 @@
 import { randomUUID } from 'crypto';
+import { EmailStatus } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { HttpError } from '../lib/httpError';
 import { emailQueue } from '../queues/emailQueue';
 import { SEND_EMAIL_JOB } from '../queues/names';
+import { indexScheduledEmails, toEmailDoc } from './searchIndex';
 
 const MAX_AHEAD_MS = 30 * 24 * 60 * 60 * 1000;
 const CHUNK = 500;
@@ -76,6 +78,21 @@ export async function scheduleBatch(input: ScheduleInput) {
     await prisma.batch.delete({ where: { id: batchId } }).catch(() => {});
     throw err;
   }
+
+  // searchable right away, if elasticsearch is down this only logs
+  const senderEmail = new Map(senders.map((sender) => [sender.id, sender.email]));
+  await indexScheduledEmails(
+    rows.map((row) => ({
+      id: row.id,
+      doc: toEmailDoc({
+        ...row,
+        status: EmailStatus.scheduled,
+        sentAt: null,
+        sender: { email: senderEmail.get(row.senderId) ?? '' },
+        batch: { userId: input.userId, body: input.body },
+      }),
+    })),
+  );
 
   return {
     batchId,
