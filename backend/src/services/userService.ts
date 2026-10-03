@@ -7,16 +7,28 @@ type GoogleProfile = {
   avatar?: string | null;
 };
 
-// first login creates the user, later logins refresh name and photo
-export function upsertGoogleUser(profile: GoogleProfile) {
-  return prisma.user.upsert({
-    where: { googleId: profile.googleId },
-    update: { name: profile.name, email: profile.email, avatar: profile.avatar ?? null },
-    create: {
-      googleId: profile.googleId,
-      name: profile.name,
-      email: profile.email,
-      avatar: profile.avatar ?? null,
-    },
+export async function upsertGoogleUser(profile: GoogleProfile) {
+  const avatar = profile.avatar ?? null;
+
+  const byGoogle = await prisma.user.findUnique({ where: { googleId: profile.googleId } });
+  if (byGoogle) {
+    return prisma.user.update({
+      where: { id: byGoogle.id },
+      data: { name: profile.name, email: profile.email, avatar },
+    });
+  }
+
+  // an account made with an email and password: google has checked the email,
+  // so google takes over and the old password stops working
+  const byEmail = await prisma.user.findUnique({ where: { email: profile.email } });
+  if (byEmail) {
+    return prisma.user.update({
+      where: { id: byEmail.id },
+      data: { googleId: profile.googleId, passwordHash: null, name: profile.name, avatar },
+    });
+  }
+
+  return prisma.user.create({
+    data: { googleId: profile.googleId, name: profile.name, email: profile.email, avatar },
   });
 }
