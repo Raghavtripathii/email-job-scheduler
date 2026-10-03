@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { EmailList } from '../types/api';
+import type { EmailItem, EmailList } from '../types/api';
 
 export const PAGE_SIZE = 20;
 const POLL_MS = 5000;
@@ -57,7 +57,16 @@ export function useEmails(fetcher: Fetcher, enabled = true) {
 
   const refresh = useCallback(() => load(false), [load]);
 
-  return { data, loading, error, page, setPage, refresh };
+  // changes one row on screen right away, used for the star
+  const patchItem = useCallback((id: string, changes: Partial<EmailItem>) => {
+    setData((current) =>
+      current
+        ? { ...current, items: current.items.map((item) => (item.id === id ? { ...item, ...changes } : item)) }
+        : current,
+    );
+  }, []);
+
+  return { data, loading, error, page, setPage, refresh, patchItem };
 }
 
 export type EmailsState = ReturnType<typeof useEmails>;
