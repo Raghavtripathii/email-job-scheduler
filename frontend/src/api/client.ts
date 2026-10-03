@@ -9,7 +9,7 @@ export class ApiError extends Error {
   }
 }
 
-type Options = { method?: 'GET' | 'POST' | 'DELETE'; body?: unknown };
+type Options = { method?: 'GET' | 'POST' | 'PATCH' | 'DELETE'; body?: unknown };
 
 // turns the backend error shapes into one readable line
 function readError(data: unknown): string {
@@ -41,7 +41,7 @@ export async function api<T>(path: string, { method = 'GET', body }: Options = {
 
   if (!res.ok) {
     // the cookie stopped working, let the app log the user out
-    if (res.status === 401 && path !== '/api/auth/me') {
+    if (res.status === 401 && path !== '/api/auth/me' && path !== '/api/auth/email') {
       window.dispatchEvent(new Event('session-expired'));
     }
     throw new ApiError(res.status, readError(data));
