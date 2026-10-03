@@ -1,10 +1,12 @@
 import { randomBytes } from 'crypto';
 import { Router } from 'express';
+import { z } from 'zod';
 import { env } from '../config/env';
 import { googleClient } from '../lib/googleClient';
 import { clearCookieOptions, COOKIE_NAME, cookieOptions, signSession } from '../lib/jwt';
 import { prisma } from '../lib/prisma';
 import { requireUser } from '../middleware/auth';
+import { signInWithEmail } from '../services/passwordAuth';
 import { upsertGoogleUser } from '../services/userService';
 
 export const authRouter = Router();
@@ -63,7 +65,21 @@ authRouter.get('/google/callback', async (req, res) => {
   }
 });
 
-// who am i, the header on the dashboard uses this
+const emailLoginSchema = z.object({
+  email: z.string().trim().toLowerCase().email('enter a valid email').max(255),
+  password: z.string().min(8, 'use at least 8 characters').max(72, 'use 72 characters or fewer'),
+});
+
+// sign up or log in with an email and password
+authRouter.post('/email', async (req, res) => {
+  const { email, password } = emailLoginSchema.parse(req.body);
+  const user = await signInWithEmail(email, password, req.ip ?? 'unknown');
+
+  res.cookie(COOKIE_NAME, signSession(user.id), cookieOptions);
+  res.json({ ok: true });
+});
+
+// who am i, the sidebar uses this
 authRouter.get('/me', requireUser, async (_req, res) => {
   const user = await prisma.user.findUnique({
     where: { id: res.locals.userId },
