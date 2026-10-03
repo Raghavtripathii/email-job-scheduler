@@ -1,6 +1,8 @@
+import { useState, type FormEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { loginUrl } from '../api/auth';
+import { loginUrl, loginWithEmail } from '../api/auth';
 import { Button } from '../components/ui/Button';
+import { useAuth } from '../context/AuthContext';
 
 const MESSAGES: Record<string, string> = {
   google_denied: 'You cancelled the Google sign in.',
@@ -13,7 +15,7 @@ const MESSAGES: Record<string, string> = {
 
 function GoogleIcon() {
   return (
-    <svg viewBox="0 0 48 48" className="h-5 w-5" aria-hidden="true">
+    <svg viewBox="0 0 48 48" className="h-[18px] w-[18px]" aria-hidden="true">
       <path
         fill="#EA4335"
         d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
@@ -34,35 +36,89 @@ function GoogleIcon() {
   );
 }
 
+const field =
+  'h-14 w-full rounded-xl bg-surface px-4 text-sm text-ink outline-none placeholder:text-muted focus:ring-2 focus:ring-brand/30';
+
 export function LoginPage() {
   const [params] = useSearchParams();
+  const { refresh } = useAuth();
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
   const code = params.get('error');
-  const message = code ? (MESSAGES[code] ?? 'Login failed, please try again.') : null;
+  const urlMessage = code ? (MESSAGES[code] ?? 'Login failed, please try again.') : null;
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setBusy(true);
+    try {
+      await loginWithEmail(email, password);
+      // the app sees the new user and moves to the dashboard
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed, please try again.');
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-green-600 text-white">
-          <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="5" width="18" height="14" rx="2" />
-            <path d="M3 7l9 6 9-6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
-        <h1 className="text-xl font-semibold text-slate-900">Email Scheduler</h1>
-        <p className="mt-1 text-sm text-slate-500">Sign in to schedule and track your emails.</p>
+    <div className="flex min-h-screen items-center justify-center bg-white px-4">
+      <div className="w-full max-w-[500px] rounded-xl border border-line px-[60px] py-[60px]">
+        <h1 className="text-center text-[32px] font-bold leading-tight text-ink">Login</h1>
 
-        {message && <div className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{message}</div>}
+        {urlMessage && (
+          <div className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-center text-sm text-red-700">{urlMessage}</div>
+        )}
 
         <Button
-          variant="secondary"
-          className="mt-6 w-full py-2.5"
+          variant="soft"
+          size="lg"
+          className="mt-6 w-full"
           onClick={() => {
             window.location.href = loginUrl;
           }}
         >
           <GoogleIcon />
-          Continue with Google
+          Login with Google
         </Button>
+
+        <div className="my-5 flex items-center gap-3">
+          <span className="h-px flex-1 bg-line" />
+          <span className="text-xs text-muted">or sign up through email</span>
+          <span className="h-px flex-1 bg-line" />
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email ID"
+            autoComplete="email"
+            required
+            className={field}
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+            autoComplete="current-password"
+            required
+            className={field}
+          />
+
+          {error && <p className="text-xs text-red-600">{error}</p>}
+
+          <Button type="submit" size="lg" loading={busy} className="mt-3 w-full">
+            Login
+          </Button>
+        </form>
       </div>
     </div>
   );
