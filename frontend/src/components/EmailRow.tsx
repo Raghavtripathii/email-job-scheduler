@@ -1,11 +1,14 @@
 import { Clock, Star } from 'lucide-react';
-import { formatPillTime } from '../lib/format';
+import { formatLongDate, formatPillTime } from '../lib/format';
 import type { EmailItem } from '../types/api';
 
 function StatusPill({ item }: { item: EmailItem }) {
   if (item.status === 'scheduled') {
     return (
-      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-warn-bg px-2.5 py-1 text-xs font-medium text-warn">
+      <span
+        title="Scheduled"
+        className="inline-flex shrink-0 items-center gap-1 rounded-full bg-warn-bg px-2.5 py-1 text-xs font-medium text-warn"
+      >
         <Clock className="h-3 w-3" />
         {formatPillTime(item.scheduledAt)}
       </span>
@@ -52,16 +55,22 @@ export function EmailRow({ item, onOpen, onToggleStar }: Props) {
         {item.snippet && <span className="min-w-0 truncate text-muted">- {item.snippet}</span>}
       </div>
 
-      <button
-        type="button"
-        aria-label={item.starred ? 'Remove star' : 'Add star'}
-        onClick={(e) => {
-          e.stopPropagation();
-          onToggleStar(item);
-        }}
-      >
-        <Star className={`h-4 w-4 ${item.starred ? 'fill-amber-400 text-amber-400' : 'text-muted'}`} />
-      </button>
+      <div className="flex items-center gap-4">
+        {/* sentAt is only filled for sent and failed emails */}
+        {item.sentAt && (
+          <span className="hidden whitespace-nowrap text-xs text-muted md:block">{formatLongDate(item.sentAt)}</span>
+        )}
+        <button
+          type="button"
+          aria-label={item.starred ? 'Remove star' : 'Add star'}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleStar(item);
+          }}
+        >
+          <Star className={`h-4 w-4 ${item.starred ? 'fill-amber-400 text-amber-400' : 'text-muted'}`} />
+        </button>
+      </div>
     </div>
   );
 }
