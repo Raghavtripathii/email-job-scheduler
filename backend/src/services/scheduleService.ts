@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import { EmailStatus } from '@prisma/client';
+import { cleanHtml, toPlainText } from '../lib/html';
 import { prisma } from '../lib/prisma';
 import { HttpError } from '../lib/httpError';
 import { emailQueue } from '../queues/emailQueue';
@@ -17,10 +18,25 @@ export type ScheduleInput = {
   startTime: Date;
   delayMs: number;
   hourlyLimit: number;
+  senderId?: string;
 };
 
 export async function scheduleBatch(input: ScheduleInput) {
-  const senders = await prisma.sender.findMany({ orderBy: { email: 'asc' } });
+  // the body is html from the editor, clean it before it is stored or sent
+  const body = cleanHtml(input.body);
+  if (toPlainText(body).length === 0) {
+    throw new HttpError(400, 'the email body is empty');
+  }
+
+  const allSenders = await prisma.sender.findMany({ orderBy: { email: 'asc' } });
+  let senders = allSenders;
+
+  // one chosen sender, or all of them in turns
+  if (input.senderId) {
+    const chosen = allSenders.find((sender) => sender.id === input.senderId);
+    if (!chosen) throw new HttpError(400, 'that sender does not exist');
+    senders = [chosen];
+  }
   if (senders.length === 0) {
     throw new HttpError(503, 'no senders set up, check ETHEREAL_SENDERS in .env');
   }
@@ -55,7 +71,7 @@ export async function scheduleBatch(input: ScheduleInput) {
         id: batchId,
         userId: input.userId,
         subject: input.subject,
-        body: input.body,
+        body,
         startTime: new Date(startMs),
         delayMs: input.delayMs,
         hourlyLimit: input.hourlyLimit,
@@ -89,7 +105,7 @@ export async function scheduleBatch(input: ScheduleInput) {
         status: EmailStatus.scheduled,
         sentAt: null,
         sender: { email: senderEmail.get(row.senderId) ?? '' },
-        batch: { userId: input.userId, body: input.body },
+        batch: { userId: input.userId, body },
       }),
     })),
   );
