@@ -48,7 +48,7 @@ export async function searchEmails({ userId, q, status, page, limit }: SearchArg
           ],
         },
       },
-      sort: [{ _score: 'desc' }, { scheduledAt: 'desc' }],
+      sort: [{ _score: { order: 'desc' } }, { scheduledAt: { order: 'desc' } }],
     });
   } catch {
     throw new HttpError(503, 'search is not available right now');
