@@ -11,10 +11,12 @@ export type EmailItem = {
   id: string;
   toEmail: string;
   subject: string;
+  snippet: string;
   scheduledAt: string;
   status: EmailStatus;
   sentAt: string | null;
   error: string | null;
+  starred: boolean;
   sender: { email: string };
 };
 
@@ -25,6 +27,25 @@ export type EmailList = {
   limit: number;
 };
 
+export type EmailDetail = {
+  id: string;
+  toEmail: string;
+  subject: string;
+  bodyHtml: string;
+  scheduledAt: string;
+  status: EmailStatus;
+  sentAt: string | null;
+  error: string | null;
+  starred: boolean;
+  sender: { name: string; email: string };
+};
+
+export type Sender = {
+  id: string;
+  name: string;
+  email: string;
+};
+
 export type ScheduleRequest = {
   subject: string;
   body: string;
@@ -32,6 +53,7 @@ export type ScheduleRequest = {
   startTime: string;
   delayMs: number;
   hourlyLimit: number;
+  senderId?: string;
 };
 
 export type ScheduleResult = {
