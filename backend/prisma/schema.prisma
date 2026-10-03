@@ -15,12 +15,13 @@ enum EmailStatus {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  googleId  String   @unique
-  name      String
-  email     String   @unique
-  avatar    String?  @db.Text
-  createdAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  googleId     String?  @unique
+  passwordHash String?
+  name         String
+  email        String   @unique
+  avatar       String?  @db.Text
+  createdAt    DateTime @default(now())
 
   batches Batch[]
   slack   SlackConnection?
@@ -68,6 +69,7 @@ model EmailJob {
   sentAt      DateTime?
   error       String?     @db.Text
   attempts    Int         @default(0)
+  starred     Boolean     @default(false)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
