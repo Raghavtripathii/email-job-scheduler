@@ -4,18 +4,18 @@ A small version of what ReachInbox does under the hood: schedule emails through 
 
 Built for the Outbox Labs (ReachInbox) SDE Intern assignment.
 
-**Demo video:** YOUR_VIDEO_LINK
+**Demo video:** YOUR_VIDEO_LINK (notes and screenshots in [demo/](demo/README.md))
 
 ## What it does
 
-- Schedule emails through an API and a React dashboard (subject, body, a CSV or text file of leads, start time, delay, hourly limit).
+- Schedule emails through an API and a React dashboard that follows the provided Figma (login, inbox, compose page, email page).
 - Uses **BullMQ delayed jobs with Redis**. There is no cron anywhere.
-- Sends through **Ethereal** (fake SMTP) from **multiple senders**.
+- Sends through **Ethereal** (fake SMTP) from **multiple senders**, as rich text (HTML) emails.
 - Survives restarts: scheduled emails still go out on time, and are never sent twice.
 - Limits sending per sender per hour, and pushes the extra emails into the next hours instead of dropping them.
 - Sends a **real Slack message** when a sender hits its hourly limit.
 - Search with **Elasticsearch**, live queue view with **Bull Board**.
-- Real **Google login**.
+- Real **Google login**, plus email and password sign up or login.
 
 ## Tech
 
@@ -26,13 +26,14 @@ Built for the Outbox Labs (ReachInbox) SDE Intern assignment.
 | Database | MySQL 8 |
 | Mail | Nodemailer with Ethereal |
 | Search | Elasticsearch 8 |
-| Frontend | React, Vite, TypeScript, Tailwind CSS v4 |
-| Auth | Google OAuth, JWT in an httpOnly cookie |
+| Frontend | React, Vite, TypeScript, Tailwind CSS v4, Lucide icons |
+| Auth | Google OAuth, email and password (bcrypt), JWT in an httpOnly cookie |
+| Email HTML | contentEditable editor, cleaned on the server with sanitize-html |
 | Infra | Docker Compose |
 
 ## Run it
 
-Needs Node 20 or newer (built and tested on Node 26), Docker Desktop, a Google account, and a Slack workspace. ngrok is only needed for the Slack connect button.
+Needs Node 20 or newer (built and tested on Node 26), Docker Desktop, a Google account, and a Slack workspace. ngrok is only needed for the Slack connect button. The frontend loads the Inter font from Google Fonts, so it needs internet.
 
 ### 1. Start Redis and MySQL (and Elasticsearch)
 
@@ -93,8 +94,10 @@ Always open `http://localhost:5173` (not `127.0.0.1`), so the login cookie and C
 | `MAX_EMAILS_PER_HOUR_PER_SENDER` | Upper cap for the hourly limit (default 100) |
 | `JWT_SECRET` | Random string, for example `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL` | Google OAuth |
-| `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`, `SLACK_REDIRECT_URL` | Slack OAuth (optional, only for the Connect Slack button) |
+| `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`, `SLACK_REDIRECT_URL` | Slack OAuth (optional, only for Connect Slack) |
 | `ETHEREAL_SENDERS` | The sender accounts from step 2 |
+
+The frontend can use `VITE_API_URL` (default `http://localhost:4000`).
 
 ### Google login setup
 
@@ -102,12 +105,14 @@ Always open `http://localhost:5173` (not `127.0.0.1`), so the login cookie and C
 2. Authorized redirect URI: `http://localhost:4000/api/auth/google/callback`. Authorized JavaScript origin: `http://localhost:5173`.
 3. Put the client ID and secret in `.env`. While the consent screen is in Testing mode, add your Google account as a test user.
 
+Email and password login needs no setup. A new email creates an account, a known email checks the password.
+
 ### Slack setup
 
 1. Create an app at https://api.slack.com/apps (from scratch) and turn **Incoming Webhooks** on.
 2. Slack needs an https redirect URL, so start a tunnel: `ngrok http 4000`.
 3. Under **OAuth & Permissions → Redirect URLs** add `https://<your-ngrok-domain>/api/slack/callback`, and put the same value in `SLACK_REDIRECT_URL`.
-4. Copy the client ID and secret into `.env`, restart the API, then click **Connect Slack** on the dashboard.
+4. Copy the client ID and secret into `.env`, restart the API, then open the user card menu in the sidebar and click **Connect Slack**.
 
 ## How it works
 
@@ -130,7 +135,7 @@ Browser (React)  --cookie-->  Express API  --->  MySQL  (every email and its sta
 
 ### Scheduling
 
-`POST /api/schedule` saves the batch and every email in MySQL in one transaction. Email number *i* is scheduled at `start + i × delay`, and senders are used in turns. Each email becomes a **BullMQ delayed job** whose id is the email's id. There is no cron or polling loop.
+`POST /api/schedule` saves the batch and every email in MySQL in one transaction. Email number *i* is scheduled at `start + i × delay`, and senders are used in turns (or one chosen sender is used for all). Each email becomes a **BullMQ delayed job** whose id is the email's id. There is no cron or polling loop.
 
 ### Persistence across restarts
 
@@ -147,7 +152,7 @@ Browser (React)  --cookie-->  Express API  --->  MySQL  (every email and its sta
 
 - Counter in Redis per sender per **fixed UTC hour** (`rate:{sender}:{hour}`), checked and increased by one **atomic Lua script**, so several workers or instances can never exceed the limit.
 - When the hour is full, the job is **not dropped or failed**. It gets a numbered place in line (a second Redis counter) and is moved to the next hour, spaced by the minimum delay, so the original order is kept as far as possible. The first `limit` go to the next hour, the next `limit` to the hour after, and so on. The email's time in the dashboard updates too.
-- The limit is set per batch in the compose form and can never go above `MAX_EMAILS_PER_HOUR_PER_SENDER`.
+- The limit is set per batch in the compose page and can never go above `MAX_EMAILS_PER_HOUR_PER_SENDER`.
 - India is UTC+5:30, so limit windows start at :30 on a clock in India.
 
 ### Behavior under load (1000+ emails at once)
@@ -164,13 +169,25 @@ PASS: limit held, nothing dropped, order kept
 
 ### Slack alert
 
-When a sender hits its hourly limit, the owner gets a real Slack message through the webhook they connected. It is sent at most once per user, per sender, per hour. If Slack is not connected, nothing is sent and nothing breaks. Connecting later works on the very next limit hit, with no restart. If Slack removes the webhook, the connection is deleted and the dashboard shows **Connect Slack** again.
+When a sender hits its hourly limit, the owner gets a real Slack message through the webhook they connected. It is sent at most once per user, per sender, per hour. If Slack is not connected, nothing is sent and nothing breaks. Connecting later works on the very next limit hit, with no restart. If Slack removes the webhook, the connection is deleted and the menu shows **Connect Slack** again.
 
 ### Search and queue dashboard
 
-- Every email is indexed in Elasticsearch when it is scheduled, and updated when it is rescheduled, sent, or failed. `GET /api/emails/search?q=` searches email, subject, sender, and body. Results are read back from MySQL in Elasticsearch's order.
+- Every email is indexed in Elasticsearch when it is scheduled, and updated when it is rescheduled, sent, or failed. `GET /api/emails/search?q=` searches email, subject, sender, and body text. Results are read back from MySQL in Elasticsearch's order.
 - Elasticsearch is best effort. If it is down, scheduling and sending keep working. The index is rebuilt from MySQL when missing, or with `npm run reindex`.
-- Bull Board is at `http://localhost:4000/admin/queues` (login required).
+- Bull Board is at `http://localhost:4000/admin/queues` (login required), also linked in the user card menu.
+
+### Email content
+
+The compose page has a rich text editor. The HTML is cleaned on the server (allowed tags and styles only, safe links) before it is saved and sent, and every email goes out with an HTML part and a plain text part.
+
+## The screens (from the Figma)
+
+- **Login:** Google button, and email and password.
+- **Inbox:** sidebar with the user card, Compose, and Scheduled and Sent with live counts. Search with a status filter and refresh. Each row shows the recipient, the time or status, subject, preview, sent time, and a star.
+- **Compose:** a full page with From (one sender or all in turns), To chips with **Upload List** (shows how many addresses were found), Subject, Delay between 2 emails (seconds), Hourly Limit, the editor, and a **Send Later** popover.
+- **Email page:** subject, star, sender, recipient details, and the email as it was sent.
+- Loading skeletons, empty states, error states, and toasts everywhere.
 
 ## Features
 
@@ -187,11 +204,10 @@ When a sender hits its hourly limit, the owner gets a real Slack message through
 | Slack OAuth and alert | `routes/slack.ts`, `services/slackNotifier.ts` |
 | Elasticsearch search | `services/searchIndex.ts`, `services/searchService.ts` |
 | Bull Board | `routes/queueBoard.ts` |
-| Google OAuth, JWT cookie | `routes/auth.ts`, `middleware/auth.ts` |
+| Google login, email login, JWT cookie | `routes/auth.ts`, `services/passwordAuth.ts`, `middleware/auth.ts` |
+| HTML email cleaning | `lib/html.ts` |
 
-**Frontend**
-
-Google login page, header with name, email, and avatar plus logout, **Scheduled** and **Sent** tabs with live counts, **Compose New Email** (subject, body, CSV or text upload with the number of emails found, start time, delay, hourly limit), tables with loading, empty, and error states, pagination, search, Connect Slack button, toasts, reusable UI components, and typed API calls.
+**Frontend:** pages in `src/pages`, reusable pieces in `src/components` and `src/components/ui`, typed API calls in `src/api`, and design colors in one place (`src/index.css`).
 
 ## API
 
@@ -199,10 +215,14 @@ Google login page, header with name, email, and avatar plus logout, **Scheduled*
 |---|---|---|
 | GET | `/health` | database and Redis check |
 | GET | `/api/auth/google`, `/api/auth/google/callback` | Google login |
+| POST | `/api/auth/email` | sign up or log in with email and password |
 | GET, POST | `/api/auth/me`, `/api/auth/logout` | current user, logout |
-| POST | `/api/schedule` | create a batch |
-| GET | `/api/emails/scheduled`, `/api/emails/sent` | the two lists |
+| GET | `/api/senders` | the sender accounts (no passwords) |
+| POST | `/api/schedule` | create a batch (optional `senderId`) |
+| GET | `/api/emails/scheduled`, `/api/emails/sent` | the two lists (optional `status`) |
 | GET | `/api/emails/search?q=` | search |
+| GET | `/api/emails/:id` | one email with its body |
+| PATCH | `/api/emails/:id/star` | star or unstar |
 | GET, DELETE | `/api/slack/connect`, `/callback`, `/status`, `/disconnect` | Slack |
 | GET | `/admin/queues` | Bull Board |
 
@@ -217,6 +237,9 @@ Google login page, header with name, email, and avatar plus logout, **Scheduled*
 - **Slack's redirect URL must be https**, so ngrok is needed for local development.
 - **Elasticsearch is best effort**, the body is indexed up to 2000 characters, and multi-word searches match words in the same field.
 - **Bull Board is open to any logged-in user.** Job payloads only contain an email id. A real product would limit it to admins.
+- **Email and password accounts are not email-verified.** If someone later logs in with Google using the same address, Google takes the account over and the old password stops working, so nobody can pre-register someone else's address. Login attempts are limited to 8 failures per 15 minutes per address and IP.
+- **The editor uses `document.execCommand`**, which is old but widely supported and keeps the code small.
 - **The dashboard polls every 5 seconds** (only while the tab is visible) instead of using websockets.
+- **Not built from the Figma:** attachments, and archive and trash on the email page.
 - **No unit tests.** I checked behavior with the load test script and manual scenarios (restart, Redis restart, outage, limit hit, Slack disconnect and reconnect).
-- **Design:** DESIGN_NOTE
+- **Design:** follows the provided Figma. The logo is a pixel font approximation, and the icons come from Lucide.
