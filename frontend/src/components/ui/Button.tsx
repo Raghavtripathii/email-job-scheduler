@@ -2,20 +2,23 @@ import type { ButtonHTMLAttributes } from 'react';
 import { Spinner } from './Spinner';
 
 type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: 'primary' | 'secondary' | 'ghost';
-  size?: 'md' | 'sm';
+  variant?: 'primary' | 'outline' | 'soft' | 'secondary' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
 };
 
 const variants = {
-  primary: 'bg-green-600 text-white hover:bg-green-700',
-  secondary: 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50',
-  ghost: 'text-slate-600 hover:bg-slate-100',
+  primary: 'rounded-xl bg-brand text-white hover:bg-brand-dark',
+  outline: 'rounded-full border border-brand text-brand hover:bg-brand-soft',
+  soft: 'rounded-xl bg-brand-soft text-ink hover:bg-[#d9efe2]',
+  secondary: 'rounded-lg border border-line bg-white text-ink hover:bg-surface',
+  ghost: 'rounded-lg text-ink hover:bg-surface',
 };
 
 const sizes = {
-  md: 'px-4 py-2',
-  sm: 'px-3 py-1.5',
+  sm: 'h-8 px-3',
+  md: 'h-10 px-5',
+  lg: 'h-12 px-5',
 };
 
 export function Button({
@@ -31,7 +34,7 @@ export function Button({
     <button
       {...rest}
       disabled={disabled || loading}
-      className={`inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${variants[variant]} ${sizes[size]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${variants[variant]} ${sizes[size]} ${className}`}
     >
       {loading && <Spinner className="h-4 w-4" />}
       {children}
