@@ -1,6 +1,7 @@
 import { DelayedError, Worker, type Job } from 'bullmq';
 import { EmailStatus } from '@prisma/client';
 import { env } from '../config/env';
+import { bodyToHtml, toPlainText } from '../lib/html';
 import { prisma } from '../lib/prisma';
 import { bullConnection } from '../lib/redis';
 import { sendEmail } from '../lib/mailer';
@@ -67,11 +68,13 @@ async function processEmail(job: Job<EmailJobData>, token?: string) {
   }
 
   try {
+    const html = bodyToHtml(email.batch.body);
     const result = await sendEmail({
       sender: email.sender,
       to: email.toEmail,
       subject: email.subject,
-      text: email.batch.body,
+      html,
+      text: toPlainText(html),
     });
 
     const sentAt = new Date();
