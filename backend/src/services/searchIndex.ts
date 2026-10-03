@@ -1,5 +1,6 @@
 import type { EmailStatus } from '@prisma/client';
 import { elastic, EMAIL_INDEX } from '../lib/elastic';
+import { toPlainText } from '../lib/html';
 import { prisma } from '../lib/prisma';
 
 const MAX_BODY_CHARS = 2000;
@@ -35,7 +36,8 @@ export function toEmailDoc(row: RowForIndex): EmailDoc {
     batchId: row.batchId,
     toEmail: row.toEmail,
     subject: row.subject,
-    body: row.batch.body.slice(0, MAX_BODY_CHARS),
+    // the body is html, search only needs the words
+    body: toPlainText(row.batch.body).slice(0, MAX_BODY_CHARS),
     senderEmail: row.sender.email,
     status: row.status,
     scheduledAt: row.scheduledAt,
