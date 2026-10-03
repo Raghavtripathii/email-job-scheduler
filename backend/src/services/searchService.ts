@@ -2,7 +2,7 @@ import type { EmailStatus } from '@prisma/client';
 import { elastic, EMAIL_INDEX } from '../lib/elastic';
 import { HttpError } from '../lib/httpError';
 import { prisma } from '../lib/prisma';
-import { emailSelect } from './emailList';
+import { emailSelect, toListItem } from './emailList';
 
 // elasticsearch does not allow paging deeper than this by default
 const MAX_WINDOW = 10_000;
@@ -63,7 +63,10 @@ export async function searchEmails({ userId, q, status, page, limit }: SearchArg
     select: emailSelect,
   });
   const byId = new Map(rows.map((row) => [row.id, row]));
-  const items = ids.map((id) => byId.get(id)).filter((row): row is NonNullable<typeof row> => Boolean(row));
+  const items = ids
+    .map((id) => byId.get(id))
+    .filter((row): row is NonNullable<typeof row> => Boolean(row))
+    .map(toListItem);
 
   return { items, total, page, limit };
 }
