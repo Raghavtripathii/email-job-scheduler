@@ -21,11 +21,14 @@ function getTransport(sender: Sender) {
   return transport;
 }
 
-export async function sendEmail(args: { sender: Sender; to: string; subject: string; text: string }) {
+type SendArgs = { sender: Sender; to: string; subject: string; html: string; text: string };
+
+export async function sendEmail(args: SendArgs) {
   const info = await getTransport(args.sender).sendMail({
     from: `"${args.sender.name}" <${args.sender.email}>`,
     to: args.to,
     subject: args.subject,
+    html: args.html,
     text: args.text,
   });
 
