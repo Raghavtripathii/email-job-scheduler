@@ -4,8 +4,7 @@ A small version of what ReachInbox does under the hood: schedule emails through 
 
 Built for the Outbox Labs (ReachInbox) SDE Intern assignment.
 
-**Demo video:** YOUR_VIDEO_LINK (notes and screenshots in [demo/](demo/README.md))
-
+**Demo video:** [YOUR_VIDEO_LINK](https://drive.google.com/file/d/1kndftl969F2dPd83erK2gruzLqC_Dvj9/view?usp=sharing) (notes and screenshots in [demo/](demo/README.md))
 ## What it does
 
 - Schedule emails through an API and a React dashboard that follows the provided Figma (login, inbox, compose page, email page).
