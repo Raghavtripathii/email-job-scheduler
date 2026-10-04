@@ -10,3 +10,5 @@ coverage/
 .vscode/
 make-env-keys.js
 guide.md
+
+demo/*.mp4
