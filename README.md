@@ -1,13 +1,12 @@
 # Email Job Scheduler
 
-A small version of what ReachInbox does under the hood: schedule emails through an API and a dashboard, send them at the right time, never twice, with rate limits, Slack alerts, and search.
+A small email scheduling system: schedule emails through an API and a dashboard, send them at the right time, never twice, with rate limits, Slack alerts, and search.
 
-Built for the Outbox Labs (ReachInbox) SDE Intern assignment.
+Originally built as a take-home exercise for a full-stack internship, then extended on my own.
 
-**Demo video:** [YOUR_VIDEO_LINK](https://drive.google.com/file/d/1kndftl969F2dPd83erK2gruzLqC_Dvj9/view?usp=sharing) (notes and screenshots in [demo/](demo/README.md))
 ## What it does
 
-- Schedule emails through an API and a React dashboard that follows the provided Figma (login, inbox, compose page, email page).
+- Schedule emails through an API and a React dashboard (login, inbox, compose page, email page).
 - Uses **BullMQ delayed jobs with Redis**. There is no cron anywhere.
 - Sends through **Ethereal** (fake SMTP) from **multiple senders**, as rich text (HTML) emails.
 - Survives restarts: scheduled emails still go out on time, and are never sent twice.
@@ -180,7 +179,7 @@ When a sender hits its hourly limit, the owner gets a real Slack message through
 
 The compose page has a rich text editor. The HTML is cleaned on the server (allowed tags and styles only, safe links) before it is saved and sent, and every email goes out with an HTML part and a plain text part.
 
-## The screens (from the Figma)
+## The screens
 
 - **Login:** Google button, and email and password.
 - **Inbox:** sidebar with the user card, Compose, and Scheduled and Sent with live counts. Search with a status filter and refresh. Each row shows the recipient, the time or status, subject, preview, sent time, and a star.
@@ -239,6 +238,6 @@ The compose page has a rich text editor. The HTML is cleaned on the server (allo
 - **Email and password accounts are not email-verified.** If someone later logs in with Google using the same address, Google takes the account over and the old password stops working, so nobody can pre-register someone else's address. Login attempts are limited to 8 failures per 15 minutes per address and IP.
 - **The editor uses `document.execCommand`**, which is old but widely supported and keeps the code small.
 - **The dashboard polls every 5 seconds** (only while the tab is visible) instead of using websockets.
-- **Not built from the Figma:** attachments, and archive and trash on the email page.
+- **Not built:** attachments, and archive and trash on the email page.
 - **No unit tests.** I checked behavior with the load test script and manual scenarios (restart, Redis restart, outage, limit hit, Slack disconnect and reconnect).
-- **Design:** follows the provided Figma. The logo is a pixel font approximation, and the icons come from Lucide.
+- **Design:** my own layout, with icons from Lucide.
