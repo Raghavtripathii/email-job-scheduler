@@ -10,7 +10,7 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
 const variants = {
   primary: 'rounded-xl bg-brand text-white hover:bg-brand-dark',
   outline: 'rounded-full border border-brand text-brand hover:bg-brand-soft',
-  soft: 'rounded-xl bg-brand-soft text-ink hover:bg-[#d9efe2]',
+  soft: 'rounded-xl bg-brand-soft text-ink hover:bg-[#e0e3ff]',
   secondary: 'rounded-lg border border-line bg-white text-ink hover:bg-surface',
   ghost: 'rounded-lg text-ink hover:bg-surface',
 };
