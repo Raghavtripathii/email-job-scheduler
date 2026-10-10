@@ -71,7 +71,7 @@ export function EmailDetailPage() {
       {detail && (
         <div className="mx-auto mt-4 max-w-[1040px] px-5">
           <div className="flex items-start gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#00c853] text-sm font-semibold text-white">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-semibold text-white">
               {detail.sender.name.charAt(0).toUpperCase()}
             </div>
 
