@@ -1,4 +1,4 @@
-// pixel style wordmark, swap for the exported svg from figma for an exact match
+// pixel style wordmark
 export function Logo() {
-  return <span className="font-logo text-[30px] font-bold leading-none tracking-wide text-ink">ONB</span>;
+  return <span className="font-logo text-[26px] font-bold leading-none tracking-wide text-ink">MAILQ</span>;
 }
