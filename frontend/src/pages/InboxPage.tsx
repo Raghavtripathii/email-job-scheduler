@@ -27,7 +27,10 @@ const FILTERS: Record<Tab | 'search', Option[]> = {
 };
 
 const EMPTY = {
-  scheduled: { title: 'No scheduled emails', text: 'Emails you schedule will wait here until it is time to go out.' },
+  scheduled: {
+    title: 'No scheduled emails',
+    text: 'Emails you schedule will wait here until it is time to go out.',
+  },
   sent: { title: 'No sent emails yet', text: 'Once an email goes out, it shows up here with its status.' },
   search: { title: 'No matches', text: 'Try another word, or part of an email address.' },
 };

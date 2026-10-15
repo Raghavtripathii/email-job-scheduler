@@ -5,8 +5,27 @@ const SAFE_STYLE = /^[0-9a-z\s.%-]+$/i;
 
 const OPTIONS: sanitizeHtml.IOptions = {
   allowedTags: [
-    'p', 'br', 'div', 'span', 'b', 'strong', 'i', 'em', 'u', 's', 'strike',
-    'ul', 'ol', 'li', 'blockquote', 'a', 'font', 'h1', 'h2', 'h3', 'hr',
+    'p',
+    'br',
+    'div',
+    'span',
+    'b',
+    'strong',
+    'i',
+    'em',
+    'u',
+    's',
+    'strike',
+    'ul',
+    'ol',
+    'li',
+    'blockquote',
+    'a',
+    'font',
+    'h1',
+    'h2',
+    'h3',
+    'hr',
   ],
   allowedAttributes: {
     a: ['href', 'target', 'rel'],
@@ -34,11 +53,7 @@ export function cleanHtml(html: string) {
 }
 
 function escapeHtml(text: string) {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 // older emails were saved as plain text

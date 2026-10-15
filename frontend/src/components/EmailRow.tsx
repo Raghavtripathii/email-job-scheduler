@@ -16,7 +16,9 @@ function StatusPill({ item }: { item: EmailItem }) {
   }
   if (item.status === 'sending') {
     return (
-      <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">Sending</span>
+      <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+        Sending
+      </span>
     );
   }
   if (item.status === 'failed') {
@@ -58,7 +60,9 @@ export function EmailRow({ item, onOpen, onToggleStar }: Props) {
       <div className="flex items-center gap-4">
         {/* sentAt is only filled for sent and failed emails */}
         {item.sentAt && (
-          <span className="hidden whitespace-nowrap text-xs text-muted md:block">{formatLongDate(item.sentAt)}</span>
+          <span className="hidden whitespace-nowrap text-xs text-muted md:block">
+            {formatLongDate(item.sentAt)}
+          </span>
         )}
         <button
           type="button"

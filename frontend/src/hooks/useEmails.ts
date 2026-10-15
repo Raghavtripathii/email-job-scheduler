@@ -61,7 +61,10 @@ export function useEmails(fetcher: Fetcher, enabled = true) {
   const patchItem = useCallback((id: string, changes: Partial<EmailItem>) => {
     setData((current) =>
       current
-        ? { ...current, items: current.items.map((item) => (item.id === id ? { ...item, ...changes } : item)) }
+        ? {
+            ...current,
+            items: current.items.map((item) => (item.id === id ? { ...item, ...changes } : item)),
+          }
         : current,
     );
   }, []);

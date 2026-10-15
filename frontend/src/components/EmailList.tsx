@@ -49,7 +49,9 @@ export function EmailList({ state, emptyTitle, emptyText, onOpen, onToggleStar }
   return (
     <div>
       {error && (
-        <div className="mb-2 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">Could not refresh: {error}</div>
+        <div className="mb-2 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">
+          Could not refresh: {error}
+        </div>
       )}
       {data.items.map((item) => (
         <EmailRow key={item.id} item={item} onOpen={onOpen} onToggleStar={onToggleStar} />

@@ -87,13 +87,20 @@ export function ComposePage() {
     if (!subject.trim()) next.subject = 'Add a subject';
 
     const delay = Number(delaySec);
-    if (delaySec === '' || !Number.isFinite(delay) || delay < 0) next.delay = 'Enter the seconds between emails';
+    if (delaySec === '' || !Number.isFinite(delay) || delay < 0)
+      next.delay = 'Enter the seconds between emails';
 
     const limit = Number(hourlyLimit);
     if (!Number.isInteger(limit) || limit < 1) next.limit = 'Enter a whole number, 1 or more';
 
     // the editor html still has tags when it only looks empty
-    if (bodyHtml.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim() === '') next.body = 'Write the email';
+    if (
+      bodyHtml
+        .replace(/<[^>]*>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .trim() === ''
+    )
+      next.body = 'Write the email';
 
     setErrors(next);
     return Object.keys(next).length === 0;

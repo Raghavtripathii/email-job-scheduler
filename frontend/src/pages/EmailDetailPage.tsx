@@ -51,8 +51,14 @@ export function EmailDetailPage() {
 
         <div className="flex items-center gap-4">
           {detail && (
-            <button type="button" aria-label={detail.starred ? 'Remove star' : 'Add star'} onClick={toggleStar}>
-              <Star className={`h-[18px] w-[18px] ${detail.starred ? 'fill-amber-400 text-amber-400' : 'text-muted'}`} />
+            <button
+              type="button"
+              aria-label={detail.starred ? 'Remove star' : 'Add star'}
+              onClick={toggleStar}
+            >
+              <Star
+                className={`h-[18px] w-[18px] ${detail.starred ? 'fill-amber-400 text-amber-400' : 'text-muted'}`}
+              />
             </button>
           )}
           <span className="h-6 w-px bg-line" />

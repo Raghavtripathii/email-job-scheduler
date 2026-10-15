@@ -3,7 +3,13 @@ import { Router } from 'express';
 import { env } from '../config/env';
 import { redis } from '../lib/redis';
 import { requireUser } from '../middleware/auth';
-import { buildAuthorizeUrl, exchangeCode, getStatus, removeConnection, saveConnection } from '../services/slackService';
+import {
+  buildAuthorizeUrl,
+  exchangeCode,
+  getStatus,
+  removeConnection,
+  saveConnection,
+} from '../services/slackService';
 
 export const slackRouter = Router();
 

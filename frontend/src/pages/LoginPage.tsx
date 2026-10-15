@@ -72,7 +72,9 @@ export function LoginPage() {
         <h1 className="text-center text-[32px] font-bold leading-tight text-ink">Login</h1>
 
         {urlMessage && (
-          <div className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-center text-sm text-red-700">{urlMessage}</div>
+          <div className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-center text-sm text-red-700">
+            {urlMessage}
+          </div>
         )}
 
         <Button

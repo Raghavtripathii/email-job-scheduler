@@ -27,9 +27,7 @@ const schema = z.object({
 });
 
 // an empty value in .env counts as "not set"
-const raw = Object.fromEntries(
-  Object.entries(process.env).filter(([, value]) => value !== ''),
-);
+const raw = Object.fromEntries(Object.entries(process.env).filter(([, value]) => value !== ''));
 
 const parsed = schema.safeParse(raw);
 

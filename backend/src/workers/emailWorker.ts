@@ -42,7 +42,9 @@ async function processEmail(job: Job<EmailJobData>, token?: string) {
     await job.moveToDelayed(runAt, token);
 
     if (slot.position === 1) {
-      console.log(`hourly limit of ${limit} hit for ${email.sender.email}, pushing the rest to the next hours`);
+      console.log(
+        `hourly limit of ${limit} hit for ${email.sender.email}, pushing the rest to the next hours`,
+      );
     }
 
     // tells the owner on slack, at most once per sender per hour
@@ -100,9 +102,7 @@ async function processEmail(job: Job<EmailJobData>, token?: string) {
 export function createEmailWorker() {
   // one send per min delay, shared by every worker on this queue
   const limiter =
-    env.MIN_DELAY_BETWEEN_EMAILS_MS > 0
-      ? { max: 1, duration: env.MIN_DELAY_BETWEEN_EMAILS_MS }
-      : undefined;
+    env.MIN_DELAY_BETWEEN_EMAILS_MS > 0 ? { max: 1, duration: env.MIN_DELAY_BETWEEN_EMAILS_MS } : undefined;
 
   const worker = new Worker<EmailJobData>(EMAIL_QUEUE_NAME, processEmail, {
     connection: bullConnection,

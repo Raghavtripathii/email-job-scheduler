@@ -6,7 +6,8 @@ import { useAuth } from '../context/AuthContext';
 import { useSlack } from '../hooks/useSlack';
 import { Avatar } from './ui/Avatar';
 
-const itemClass = 'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-ink hover:bg-surface';
+const itemClass =
+  'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-ink hover:bg-surface';
 
 export function UserMenu() {
   const { user, signOut } = useAuth();

@@ -24,7 +24,9 @@ function NavItem({ to, icon, label, count, active }: NavItemProps) {
     >
       {icon}
       <span className="flex-1">{label}</span>
-      {count !== undefined && <span className="text-xs font-normal text-muted">{count.toLocaleString()}</span>}
+      {count !== undefined && (
+        <span className="text-xs font-normal text-muted">{count.toLocaleString()}</span>
+      )}
     </Link>
   );
 }
