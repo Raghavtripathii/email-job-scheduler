@@ -13,7 +13,12 @@
     "start:worker": "node dist/worker.js",
     "loadtest": "tsx src/scripts/loadTest.ts",
     "token": "tsx src/scripts/devToken.ts",
-    "reindex": "tsx src/scripts/reindex.ts"
+    "reindex": "tsx src/scripts/reindex.ts",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
@@ -38,6 +43,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
@@ -45,9 +51,15 @@
     "@types/node": "^26.6.3",
     "@types/nodemailer": "^8.0.2",
     "@types/sanitize-html": "^2.16.2",
+    "eslint": "^9.39.5",
+    "prettier": "^3.9.10",
     "prisma": "^6.19.3",
     "tsx": "^4.23.15",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.71.2"
   },
-  "private": "true"
+  "private": "true",
+  "engines": {
+    "node": ">=20.19.0"
+  }
 }
