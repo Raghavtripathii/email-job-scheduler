@@ -9,9 +9,9 @@ async function main() {
   console.log(`reindexed ${total} emails`);
 }
 
-main()
+void main()
   .catch((err) => {
-    console.error('reindex failed:', err.message);
+    console.error('reindex failed:', err instanceof Error ? err.message : err);
     process.exitCode = 1;
   })
   .finally(async () => {
