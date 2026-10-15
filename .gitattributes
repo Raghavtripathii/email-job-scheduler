@@ -1,0 +1,2 @@
+# one line ending for everyone, so windows stops warning about LF and CRLF
+* text=auto eol=lf
