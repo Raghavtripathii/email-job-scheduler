@@ -1,7 +1,7 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Email job scheduler API and worker (BullMQ, Redis, MySQL)",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
@@ -21,8 +21,8 @@
     "typecheck": "tsc --noEmit"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Raghvendra Tripathi",
+  "license": "MIT",
   "type": "commonjs",
   "dependencies": {
     "@bull-board/api": "^9.10.2",
@@ -48,7 +48,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^26.6.3",
+    "@types/node": "^22.20.5",
     "@types/nodemailer": "^8.0.2",
     "@types/sanitize-html": "^2.16.2",
     "eslint": "^9.39.5",
@@ -58,7 +58,7 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.71.2"
   },
-  "private": "true",
+  "private": true,
   "engines": {
     "node": ">=20.19.0"
   }
