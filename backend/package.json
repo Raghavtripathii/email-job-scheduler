@@ -39,7 +39,7 @@
     "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
     "nodemailer": "^10.0.13",
-    "sanitize-html": "^2.18.0",
+    "sanitize-html": "^2.18.1",
     "zod": "^3.25.76"
   },
   "devDependencies": {
