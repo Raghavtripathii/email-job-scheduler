@@ -1,5 +1,6 @@
 import IORedis from 'ioredis';
 import { env } from '../config/env';
+import { errorMessage } from './errorMessage';
 
 const url = new URL(env.REDIS_URL);
 
@@ -20,4 +21,4 @@ export function createRedis() {
 
 export const redis = createRedis();
 
-redis.on('error', (err) => console.error('redis error:', err.message));
+redis.on('error', (err) => console.error(`redis error: ${errorMessage(err)}`));
