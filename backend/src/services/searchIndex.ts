@@ -1,5 +1,6 @@
 import type { EmailStatus } from '@prisma/client';
 import { elastic, EMAIL_INDEX } from '../lib/elastic';
+import { errorMessage } from '../lib/errorMessage';
 import { toPlainText } from '../lib/html';
 import { prisma } from '../lib/prisma';
 
@@ -123,7 +124,7 @@ async function safely(what: string, work: () => Promise<unknown>) {
     const status = (err as { meta?: { statusCode?: number } }).meta?.statusCode;
     // a missing document is normal when the index was just rebuilt
     if (status === 404) return;
-    console.error(`elasticsearch ${what} failed:`, err instanceof Error ? err.message : err);
+    console.error(`elasticsearch ${what} failed: ${errorMessage(err)}`);
   }
 }
 
