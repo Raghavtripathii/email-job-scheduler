@@ -1,6 +1,9 @@
 import { redis } from '../lib/redis';
+import { windowOf } from '../lib/slotMath';
 
-const WINDOW_MS = 60 * 60 * 1000;
+// the callers keep importing these from here
+export { nextSlotTime, windowOf } from '../lib/slotMath';
+
 const KEY_TTL_SECONDS = 2 * 60 * 60;
 
 // check and count in one step so two workers can't take the same last slot
@@ -24,11 +27,6 @@ type RateRedis = typeof redis & {
 };
 const rateRedis = redis as RateRedis;
 
-// the hour number since 1970, same for every worker
-export function windowOf(nowMs: number) {
-  return Math.floor(nowMs / WINDOW_MS);
-}
-
 export function slotKeys(senderId: string, nowMs: number) {
   const w = windowOf(nowMs);
   return { used: `rate:${senderId}:${w}`, overflow: `overflow:${senderId}:${w}` };
@@ -38,14 +36,4 @@ export async function takeSlot(senderId: string, limit: number, nowMs = Date.now
   const keys = slotKeys(senderId, nowMs);
   const [ok, position] = await rateRedis.takeHourlySlot(keys.used, keys.overflow, limit, KEY_TTL_SECONDS);
   return { allowed: ok === 1, position };
-}
-
-// when an over-limit email should run next, in the order they were pushed
-export function nextSlotTime(position: number, limit: number, minDelayMs: number, nowMs = Date.now()) {
-  const windowStart = windowOf(nowMs) * WINDOW_MS;
-  const hoursAhead = Math.floor((position - 1) / limit) + 1;
-  const indexInHour = (position - 1) % limit;
-  // keep the whole line inside one hour even with a big limit
-  const spacing = Math.min(minDelayMs, Math.floor(WINDOW_MS / limit));
-  return windowStart + hoursAhead * WINDOW_MS + indexInHour * spacing;
 }
