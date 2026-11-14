@@ -1,3 +1,4 @@
+import { errorMessage } from '../lib/errorMessage';
 import { prisma } from '../lib/prisma';
 import { redis } from '../lib/redis';
 import { buildRateLimitMessage } from '../lib/slackMessage';
@@ -49,7 +50,13 @@ export async function notifyRateLimitHit(args: Args) {
     const won = await redis.set(key, '1', 'EX', KEY_TTL_SECONDS, 'NX');
     if (won !== 'OK') return;
 
-    const sent = await postToSlack(args.userId, connection.webhookUrl, buildRateLimitMessage(args));
+    // a network error counts as not sent too, so the key cannot block the next try for two hours
+    const sent = await postToSlack(args.userId, connection.webhookUrl, buildRateLimitMessage(args)).catch(
+      (err) => {
+        console.error(`slack post failed: ${errorMessage(err)}`);
+        return false;
+      },
+    );
     if (sent) {
       console.log(`slack notified for ${args.senderEmail}`);
     } else {
@@ -57,6 +64,6 @@ export async function notifyRateLimitHit(args: Args) {
       await redis.expire(key, RETRY_AFTER_FAIL_SECONDS);
     }
   } catch (err) {
-    console.error('slack notify failed:', err instanceof Error ? err.message : err);
+    console.error(`slack notify failed: ${errorMessage(err)}`);
   }
 }
