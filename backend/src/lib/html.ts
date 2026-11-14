@@ -33,6 +33,8 @@ const OPTIONS: sanitizeHtml.IOptions = {
     '*': ['style'],
   },
   allowedSchemes: ['http', 'https', 'mailto'],
+  // a link like //host/path points to any site, so it is not allowed
+  allowProtocolRelative: false,
   allowedStyles: {
     '*': {
       'text-align': [/^(left|right|center|justify)$/],
