@@ -1,5 +1,15 @@
 import nodemailer, { type Transporter } from 'nodemailer';
 import type { Sender } from '@prisma/client';
+import { env } from '../config/env';
+
+export type SentMessage = { from: string; to: string; subject: string; html: string; text: string };
+
+// with MAIL_TRANSPORT=memory the emails land here instead of going out, so tests can read them
+export const outbox: SentMessage[] = [];
+
+export function clearOutbox() {
+  outbox.length = 0;
+}
 
 // one smtp connection setup per sender, reused
 const transports = new Map<string, Transporter>();
@@ -24,8 +34,15 @@ function getTransport(sender: Sender) {
 type SendArgs = { sender: Sender; to: string; subject: string; html: string; text: string };
 
 export async function sendEmail(args: SendArgs) {
+  const from = `"${args.sender.name}" <${args.sender.email}>`;
+
+  if (env.MAIL_TRANSPORT === 'memory') {
+    outbox.push({ from, to: args.to, subject: args.subject, html: args.html, text: args.text });
+    return { messageId: `memory-${outbox.length}`, previewUrl: null };
+  }
+
   const info = await getTransport(args.sender).sendMail({
-    from: `"${args.sender.name}" <${args.sender.email}>`,
+    from,
     to: args.to,
     subject: args.subject,
     html: args.html,
