@@ -13,6 +13,7 @@ const schema = z.object({
   WORKER_CONCURRENCY: z.coerce.number().int().min(1).default(5),
   MIN_DELAY_BETWEEN_EMAILS_MS: z.coerce.number().int().min(0).default(2000),
   MAX_EMAILS_PER_HOUR_PER_SENDER: z.coerce.number().int().min(1).default(100),
+  MAIL_TRANSPORT: z.enum(['smtp', 'memory']).default('smtp'),
 
   JWT_SECRET: z.string().min(16),
   GOOGLE_CLIENT_ID: z.string().min(1),
