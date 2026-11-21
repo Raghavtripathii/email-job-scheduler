@@ -102,13 +102,14 @@ describe('the email worker with a real mysql and redis', () => {
     await waitFor(async () => (await countWithStatus('sent')) === 30);
 
     expect(outbox).toHaveLength(30);
-    expect(outbox.map((message) => message.to).sort()).toEqual(recipients);
+    expect(outbox.map((message) => message.to).sort()).toEqual([...recipients].sort());
   });
 
   it('does not send again when the same job shows up again', async () => {
     await schedule(addresses(3));
     startWorkers();
-    await waitFor(async () => (await countWithStatus('sent')) === 3);
+    // the jobs finish a moment after their rows say sent, and a running job cannot be removed
+    await waitFor(async () => (await emailQueue.getJobCounts('completed')).completed === 3);
 
     // like reconcile putting a job back after it was removed
     const [row] = await prisma.emailJob.findMany();
