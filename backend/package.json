@@ -21,7 +21,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:int": "vitest run --config vitest.int.config.mts",
+    "test:all": "npm test && npm run test:int"
   },
   "keywords": [],
   "author": "Raghvendra Tripathi",
