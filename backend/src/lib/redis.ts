@@ -10,6 +10,8 @@ export const bullConnection = {
   port: Number(url.port) || 6379,
   username: url.username || undefined,
   password: url.password ? decodeURIComponent(url.password) : undefined,
+  // the number after the slash in the url, so the tests can use a redis db of their own
+  db: Number(url.pathname.slice(1)) || 0,
   tls: url.protocol === 'rediss:' ? {} : undefined,
   maxRetriesPerRequest: null,
 };
